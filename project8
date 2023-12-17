@@ -1,0 +1,38 @@
+#By Zackary Paulson
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Path qw(make_path);
+use Archive::Zip;
+
+if (@ARGV != 1) {
+    die "Usage: $0 <user_data_file>\n";
+}
+
+my $user_data_file = $ARGV[0];
+
+unless (-e $user_data_file) {
+    die "Error: File $user_data_file not found.\n";
+}
+
+open my $fh, '<', $user_data_file or die "Error: Cannot open file $user_data_file: $!\n";
+
+while (<$fh>) {
+    chomp;
+    my $username = $_;
+
+    system("userdel $username");
+
+    my $archive_dir = "/path/to/archive/$username";
+    make_path($archive_dir);
+
+    my $zip_file = "$archive_dir/data_archive.zip";
+    my $zip = Archive::Zip->new();
+    $zip->addTree("/path/to/user_data/$username", $username);
+    $zip->writeToFileNamed($zip_file);
+
+    print "User $username deleted. Archived data stored in: $zip_file\n";
+}
+
+close $fh;
